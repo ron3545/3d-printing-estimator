@@ -1,3 +1,4 @@
+import os
 import tkinter as tk
 from tkinter import ttk
 from tkinter import TclError
@@ -33,7 +34,7 @@ DEFAULT_GRAMS_USED = "0"
 DEFAULT_PRINTER_TYPE = ""
 DEFAULT_PRINTER_WATTAGE = "350"
 DEFAULT_PRINT_HOURS = "0"
-DEFAULT_ELECTRICITY_RATE = "50"
+DEFAULT_ELECTRICITY_RATE = "18"
 DEFAULT_MACHINE_COST_PER_HOUR = "0"
 
 # Overall defaults
@@ -55,6 +56,26 @@ DEFAULT_ADDON_PRICE = 0
 # MODEL FRAME
 # =========================
 class ModelFrame(ttk.LabelFrame):
+    @staticmethod
+    def add_numeric_validation(entry_widget, var, allow_float=True):
+        """Attach validation to an Entry widget to ensure only numbers are allowed. Highlights red if invalid."""
+        def validate_number(*args):
+            value = var.get()
+            try:
+                if allow_float:
+                    if value.strip() == "":
+                        entry_widget.configure(background="white")
+                        return
+                    float(value)
+                else:
+                    if value.strip() == "":
+                        entry_widget.configure(background="white")
+                        return
+                    int(value)
+                entry_widget.configure(background="white")
+            except ValueError:
+                entry_widget.configure(background="#ffcccc")  # light red
+        var.trace_add("write", validate_number)
     def __init__(self, parent, index):
         super().__init__(parent, text=f"Model {index}", relief="raised", borderwidth=2)
         self.index = index
@@ -72,8 +93,9 @@ class ModelFrame(ttk.LabelFrame):
         if hasattr(self, 'on_remove'):
             self.on_remove(self)
     
-    def bind_clear_on_focus(self, entry_widget, variable):
-        """Clear the field when focused (select all text)"""
+    @staticmethod
+    def bind_select_all_on_focus(entry_widget):
+        """Select all text in the entry when focused."""
         def on_focus_in(event):
             entry_widget.select_range(0, tk.END)
             entry_widget.icursor(tk.END)
@@ -104,9 +126,10 @@ class ModelFrame(ttk.LabelFrame):
         ttk.Label(self, text="Quantity").grid(row=row, column=0, sticky="w", padx=5, pady=2)
         self.quantity_var = tk.StringVar(value="1")
         self.quantity_var.trace_add("write", lambda *args: self.auto_calculate())
-        quantity_entry = ttk.Entry(self, textvariable=self.quantity_var)
+        quantity_entry = tk.Entry(self, textvariable=self.quantity_var)
         quantity_entry.grid(row=row, column=1, sticky="ew", padx=5)
-        self.bind_clear_on_focus(quantity_entry, self.quantity_var)
+        self.bind_select_all_on_focus(quantity_entry)
+        self.add_numeric_validation(quantity_entry, self.quantity_var, allow_float=False)
         self.vars["Quantity"] = self.quantity_var
         row += 1
 
@@ -119,22 +142,32 @@ class ModelFrame(ttk.LabelFrame):
         row += 1
 
         material_fields = [
-            ("Material", DEFAULT_MATERIAL),
-            ("Material Price", DEFAULT_MATERIAL_PRICE),
-            ("Cost per Gram", ""),
-            ("Grams Used", DEFAULT_GRAMS_USED),
+            ("Material", DEFAULT_MATERIAL, False),
+            ("Material Price", DEFAULT_MATERIAL_PRICE, True),
+            ("Cost per Gram", "", True),
+            ("Grams Used", DEFAULT_GRAMS_USED, True),
         ]
 
-        for label, default in material_fields:
+        for label, default, is_number in material_fields:
             ttk.Label(self, text=label).grid(row=row, column=0, sticky="w", padx=5, pady=2)
             var = tk.StringVar(value=default)
             var.trace_add("write", lambda *args: self.auto_calculate())
-            entry = ttk.Entry(self, textvariable=var)
-            entry.grid(row=row, column=1, sticky="ew", padx=5)
-            if label == "Cost per Gram":
-                entry.state(["readonly"])
+            if label == "Material":
+                def force_uppercase(*args, v=var):
+                    value = v.get()
+                    if value != value.upper():
+                        v.set(value.upper())
+                var.trace_add("write", force_uppercase)
+                entry = ttk.Entry(self, textvariable=var)
+            elif is_number and label != "Cost per Gram":
+                entry = tk.Entry(self, textvariable=var)
+                self.add_numeric_validation(entry, var, allow_float=True)
             else:
-                self.bind_clear_on_focus(entry, var)
+                entry = ttk.Entry(self, textvariable=var)
+                if label == "Cost per Gram":
+                    entry.state(["readonly"])
+            entry.grid(row=row, column=1, sticky="ew", padx=5)
+            self.bind_select_all_on_focus(entry)
             self.vars[label] = var
             row += 1
 
@@ -166,25 +199,28 @@ class ModelFrame(ttk.LabelFrame):
                 ttk.Label(print_time_frame, text="Print Days").grid(row=0, column=0, sticky="w", padx=5, pady=2)
                 self.print_days_var = tk.StringVar(value="0")
                 self.print_days_var.trace_add("write", lambda *args: self.auto_calculate())
-                entry_days = ttk.Entry(print_time_frame, textvariable=self.print_days_var, width=8)
+                entry_days = tk.Entry(print_time_frame, textvariable=self.print_days_var, width=8)
                 entry_days.grid(row=0, column=1, sticky="ew", padx=5)
-                self.bind_clear_on_focus(entry_days, self.print_days_var)
+                self.bind_select_all_on_focus(entry_days)
+                self.add_numeric_validation(entry_days, self.print_days_var, allow_float=True)
                 self.vars["Print Days"] = self.print_days_var
 
                 ttk.Label(print_time_frame, text="Print Hours").grid(row=1, column=0, sticky="w", padx=5, pady=2)
                 self.print_hours_var = tk.StringVar(value=DEFAULT_PRINT_HOURS)
                 self.print_hours_var.trace_add("write", lambda *args: self.auto_calculate())
-                entry_hours = ttk.Entry(print_time_frame, textvariable=self.print_hours_var, width=8)
+                entry_hours = tk.Entry(print_time_frame, textvariable=self.print_hours_var, width=8)
                 entry_hours.grid(row=1, column=1, sticky="ew", padx=5)
-                self.bind_clear_on_focus(entry_hours, self.print_hours_var)
+                self.bind_select_all_on_focus(entry_hours)
+                self.add_numeric_validation(entry_hours, self.print_hours_var, allow_float=True)
                 self.vars["Print Hours"] = self.print_hours_var
 
                 ttk.Label(print_time_frame, text="Print Minutes").grid(row=2, column=0, sticky="w", padx=5, pady=2)
                 self.print_minutes_var = tk.StringVar(value="0")
                 self.print_minutes_var.trace_add("write", lambda *args: self.auto_calculate())
-                entry_minutes = ttk.Entry(print_time_frame, textvariable=self.print_minutes_var, width=8)
+                entry_minutes = tk.Entry(print_time_frame, textvariable=self.print_minutes_var, width=8)
                 entry_minutes.grid(row=2, column=1, sticky="ew", padx=5)
-                self.bind_clear_on_focus(entry_minutes, self.print_minutes_var)
+                self.bind_select_all_on_focus(entry_minutes)
+                self.add_numeric_validation(entry_minutes, self.print_minutes_var, allow_float=True)
                 self.vars["Print Minutes"] = self.print_minutes_var
 
                 row += 1
@@ -192,9 +228,13 @@ class ModelFrame(ttk.LabelFrame):
             ttk.Label(self, text=label).grid(row=row, column=0, sticky="w", padx=5, pady=2)
             var = tk.StringVar(value=default)
             var.trace_add("write", lambda *args: self.auto_calculate())
-            entry = ttk.Entry(self, textvariable=var)
+            if label != "Printer Type":
+                entry = tk.Entry(self, textvariable=var)
+                self.add_numeric_validation(entry, var, allow_float=True)
+            else:
+                entry = ttk.Entry(self, textvariable=var)
             entry.grid(row=row, column=1, sticky="ew", padx=5)
-            self.bind_clear_on_focus(entry, var)
+            self.bind_select_all_on_focus(entry)
             self.vars[label] = var
             row += 1
         
@@ -297,6 +337,88 @@ class ModelFrame(ttk.LabelFrame):
 # MAIN APP
 # =========================
 class CostCalculatorApp:
+    def validate_all_numeric_fields(self):
+        """Check all numeric fields in project, models, and addons. Highlight invalid and return False if any invalid."""
+        invalid_fields = []
+        # Project-level fields
+        project_fields = [
+            (getattr(self, 'labor_hours_var', None), None),
+            (getattr(self, 'labor_rate_var', None), None),
+            (getattr(self, 'margin_percent_var', None), None),
+            (getattr(self, 'discount_var', None), None),
+            (getattr(self, 'packaging_var', None), None),
+            (getattr(self, 'shipping_var', None), None),
+        ]
+        # Find corresponding Entry widgets for project fields
+        entry_map = {}
+        for child in self.root.winfo_children():
+            if isinstance(child, ttk.LabelFrame) and 'Overall Labor' in str(child):
+                for sub in child.winfo_children():
+                    if isinstance(sub, ttk.Entry):
+                        entry_map[sub.cget('textvariable')] = sub
+        for var, _ in project_fields:
+            if var is not None:
+                value = var.get()
+                entry = None
+                for k, v in entry_map.items():
+                    if k == str(var):
+                        entry = v
+                        break
+                try:
+                    float(value)
+                    if entry:
+                        entry.configure(background="white")
+                except Exception:
+                    if entry:
+                        entry.configure(background="#ffcccc")
+                    invalid_fields.append(entry)
+        # Addon fields
+        for i, (name_var, qty_var, price_var) in enumerate(self.addons):
+            # Find the corresponding Entry widgets
+            row_widgets = self.addons_frame.grid_slaves(row=i)
+            qty_entry = None
+            price_entry = None
+            for w in row_widgets:
+                if isinstance(w, ttk.Entry):
+                    if w.cget('textvariable') == str(qty_var):
+                        qty_entry = w
+                    elif w.cget('textvariable') == str(price_var):
+                        price_entry = w
+            for var, entry in [(qty_var, qty_entry), (price_var, price_entry)]:
+                try:
+                    float(var.get())
+                    if entry:
+                        entry.configure(background="white")
+                except Exception:
+                    if entry:
+                        entry.configure(background="#ffcccc")
+                    invalid_fields.append(entry)
+        # Model fields
+        for model in self.models:
+            for label, var in model.vars.items():
+                # Only check fields that are numbers (skip model name, printer type, etc)
+                if label in ["Material Price", "Grams Used", "Quantity", "Print Days", "Print Hours", "Print Minutes", "Printer Wattage", "Electricity Rate / kWh", "Machine Cost / Hour"]:
+                    # Find the entry widget
+                    entry = None
+                    for child in model.winfo_children():
+                        if isinstance(child, ttk.Entry) and child.cget('textvariable') == str(var):
+                            entry = child
+                            break
+                        # Also check inside frames (like Print Time)
+                        if isinstance(child, ttk.LabelFrame):
+                            for sub in child.winfo_children():
+                                if isinstance(sub, ttk.Entry) and sub.cget('textvariable') == str(var):
+                                    entry = sub
+                                    break
+                    try:
+                        float(var.get())
+                        if entry:
+                            entry.configure(background="white")
+                    except Exception:
+                        if entry:
+                            entry.configure(background="#ffcccc")
+                        invalid_fields.append(entry)
+        return len(invalid_fields) == 0
     def __init__(self, root):
         self.root = root
         self.root.title("3D Printing Cost Calculator")
@@ -328,7 +450,7 @@ class CostCalculatorApp:
         publisher_label.pack(side="right", padx=5)
 
         # Select all text when clicked
-        project_entry.bind("<FocusIn>", lambda e: (project_entry.select_range(0, tk.END), project_entry.icursor(tk.END)))
+        ModelFrame.bind_select_all_on_focus(project_entry)
 
         # Button frame below project name
         button_frame = ttk.Frame(root)
@@ -345,39 +467,45 @@ class CostCalculatorApp:
 
         ttk.Label(inputs_frame, text="Labor Hours:").grid(row=0, column=0, sticky="w", padx=5)
         self.labor_hours_var = tk.StringVar(value=DEFAULT_LABOR_HOURS)
-        labor_hours_entry = ttk.Entry(inputs_frame, textvariable=self.labor_hours_var, width=15)
+        labor_hours_entry = tk.Entry(inputs_frame, textvariable=self.labor_hours_var, width=15)
         labor_hours_entry.grid(row=0, column=1, padx=5)
-        labor_hours_entry.bind("<FocusIn>", lambda e: (labor_hours_entry.select_range(0, tk.END), labor_hours_entry.icursor(tk.END)))
+        ModelFrame.bind_select_all_on_focus(labor_hours_entry)
+        ModelFrame.add_numeric_validation(labor_hours_entry, self.labor_hours_var, allow_float=True)
 
         ttk.Label(inputs_frame, text="Labor Rate:").grid(row=0, column=2, sticky="w", padx=5)
         self.labor_rate_var = tk.StringVar(value=DEFAULT_LABOR_RATE)
-        labor_rate_entry = ttk.Entry(inputs_frame, textvariable=self.labor_rate_var, width=15)
+        labor_rate_entry = tk.Entry(inputs_frame, textvariable=self.labor_rate_var, width=15)
         labor_rate_entry.grid(row=0, column=3, padx=5)
-        labor_rate_entry.bind("<FocusIn>", lambda e: (labor_rate_entry.select_range(0, tk.END), labor_rate_entry.icursor(tk.END)))
+        ModelFrame.bind_select_all_on_focus(labor_rate_entry)
+        ModelFrame.add_numeric_validation(labor_rate_entry, self.labor_rate_var, allow_float=True)
 
         ttk.Label(inputs_frame, text="Margin %:").grid(row=0, column=4, sticky="w", padx=5)
         self.margin_percent_var = tk.StringVar(value=DEFAULT_MARGIN_PERCENT)
-        margin_entry = ttk.Entry(inputs_frame, textvariable=self.margin_percent_var, width=15)
+        margin_entry = tk.Entry(inputs_frame, textvariable=self.margin_percent_var, width=15)
         margin_entry.grid(row=0, column=5, padx=5)
-        margin_entry.bind("<FocusIn>", lambda e: (margin_entry.select_range(0, tk.END), margin_entry.icursor(tk.END)))
+        ModelFrame.bind_select_all_on_focus(margin_entry)
+        ModelFrame.add_numeric_validation(margin_entry, self.margin_percent_var, allow_float=True)
 
         ttk.Label(inputs_frame, text="Discount %:").grid(row=1, column=0, sticky="w", padx=5)
         self.discount_var = tk.StringVar(value="0")
-        discount_entry = ttk.Entry(inputs_frame, textvariable=self.discount_var, width=15)
+        discount_entry = tk.Entry(inputs_frame, textvariable=self.discount_var, width=15)
         discount_entry.grid(row=1, column=1, padx=5)
-        discount_entry.bind("<FocusIn>", lambda e: (discount_entry.select_range(0, tk.END), discount_entry.icursor(tk.END)))
+        ModelFrame.bind_select_all_on_focus(discount_entry)
+        ModelFrame.add_numeric_validation(discount_entry, self.discount_var, allow_float=True)
 
         ttk.Label(inputs_frame, text="Packaging:").grid(row=1, column=2, sticky="w", padx=5)
         self.packaging_var = tk.StringVar(value=DEFAULT_PACKAGING)
-        packaging_entry = ttk.Entry(inputs_frame, textvariable=self.packaging_var, width=15)
+        packaging_entry = tk.Entry(inputs_frame, textvariable=self.packaging_var, width=15)
         packaging_entry.grid(row=1, column=3, padx=5)
-        packaging_entry.bind("<FocusIn>", lambda e: (packaging_entry.select_range(0, tk.END), packaging_entry.icursor(tk.END)))
+        ModelFrame.bind_select_all_on_focus(packaging_entry)
+        ModelFrame.add_numeric_validation(packaging_entry, self.packaging_var, allow_float=True)
 
         ttk.Label(inputs_frame, text="Shipping:").grid(row=1, column=4, sticky="w", padx=5)
         self.shipping_var = tk.StringVar(value=DEFAULT_SHIPPING)
-        shipping_entry = ttk.Entry(inputs_frame, textvariable=self.shipping_var, width=15)
+        shipping_entry = tk.Entry(inputs_frame, textvariable=self.shipping_var, width=15)
         shipping_entry.grid(row=1, column=5, padx=5)
-        shipping_entry.bind("<FocusIn>", lambda e: (shipping_entry.select_range(0, tk.END), shipping_entry.icursor(tk.END)))
+        ModelFrame.bind_select_all_on_focus(shipping_entry)
+        ModelFrame.add_numeric_validation(shipping_entry, self.shipping_var, allow_float=True)
 
         # Main container for models and overall totals
         main_container = ttk.Frame(root)
@@ -582,16 +710,18 @@ class CostCalculatorApp:
     def add_addon(self):
         row = len(self.addons)
         name = tk.StringVar()
-        quantity = tk.DoubleVar(value=DEFAULT_ADDON_QUANTITY)
-        price_per_unit = tk.DoubleVar(value=DEFAULT_ADDON_PRICE)
+        quantity = tk.StringVar(value=str(DEFAULT_ADDON_QUANTITY))
+        price_per_unit = tk.StringVar(value=str(DEFAULT_ADDON_PRICE))
         
         # Calculate total when quantity or price changes
         def update_addon_total(*args):
             try:
-                total = quantity.get() * price_per_unit.get()
+                q = float(quantity.get()) if quantity.get().strip() != '' else 0
+                p = float(price_per_unit.get()) if price_per_unit.get().strip() != '' else 0
+                total = q * p
                 total_label.config(text=f"{total:.2f}")
-            except:
-                pass
+            except Exception:
+                total_label.config(text="0.00")
         
         quantity.trace_add("write", update_addon_total)
         price_per_unit.trace_add("write", update_addon_total)
@@ -607,14 +737,16 @@ class CostCalculatorApp:
         name_entry.grid(row=row, column=0, padx=2, pady=2, sticky="ew")
         
         # Quantity entry
-        qty_entry = ttk.Entry(self.addons_frame, textvariable=quantity, width=6)
+        qty_entry = tk.Entry(self.addons_frame, textvariable=quantity, width=6)
         qty_entry.grid(row=row, column=1, padx=2, pady=2, sticky="ew")
         qty_entry.bind("<FocusIn>", lambda e: (qty_entry.select_range(0, tk.END), qty_entry.icursor(tk.END)))
-        
+        ModelFrame.add_numeric_validation(qty_entry, quantity, allow_float=True)
+
         # Price per unit entry
-        price_entry = ttk.Entry(self.addons_frame, textvariable=price_per_unit, width=8)
+        price_entry = tk.Entry(self.addons_frame, textvariable=price_per_unit, width=8)
         price_entry.grid(row=row, column=2, padx=2, pady=2, sticky="ew")
         price_entry.bind("<FocusIn>", lambda e: (price_entry.select_range(0, tk.END), price_entry.icursor(tk.END)))
+        ModelFrame.add_numeric_validation(price_entry, price_per_unit, allow_float=True)
         
         # Total label (calculated)
         total_label = ttk.Label(self.addons_frame, text="0.00", width=8, foreground="blue")
@@ -653,6 +785,9 @@ class CostCalculatorApp:
         model.on_remove = self.remove_model  # Bind the remove callback
         model.pack(side="left", fill="y", padx=20, pady=5)
         self.models.append(model)
+        # Scroll to the far right to show the newly added model
+        self.canvas.update_idletasks()
+        self.canvas.xview_moveto(1.0)
     
     def remove_model(self, model):
         """Remove a model from the list and destroy its widget"""
@@ -667,17 +802,10 @@ class CostCalculatorApp:
             model.destroy()
         self.models.clear()
         
-        # Clear all addons
-        for name_var, qty_var, price_var in self.addons[:]:
-            # Find and destroy addon widgets
-            pass  # Widgets are already destroyed when we clear the frame children
-        self.addons.clear()
-        
-        # Destroy addon widgets (except header row)
+        # Clear all addons (additional materials)
         for child in self.addons_frame.grid_slaves():
-            info = child.grid_info()
-            if info and info.get('row', 0) > 0:
-                child.destroy()
+            child.destroy()
+        self.addons.clear()
         
         # Destroy all remaining children in scrollable_frame
         for child in self.scrollable_frame.winfo_children():
@@ -690,6 +818,7 @@ class CostCalculatorApp:
         self.labor_hours_var.set(DEFAULT_LABOR_HOURS)
         self.labor_rate_var.set(DEFAULT_LABOR_RATE)
         self.margin_percent_var.set(DEFAULT_MARGIN_PERCENT)
+        self.discount_var.set("0")
         self.packaging_var.set(DEFAULT_PACKAGING)
         self.shipping_var.set(DEFAULT_SHIPPING)
         
@@ -742,6 +871,7 @@ class CostCalculatorApp:
                 "labor_hours": self.labor_hours_var.get(),
                 "labor_rate": self.labor_rate_var.get(),
                 "margin_percent": self.margin_percent_var.get(),
+                "discount": self.discount_var.get(),
                 "packaging": self.packaging_var.get(),
                 "shipping": self.shipping_var.get()
             },
@@ -767,11 +897,16 @@ class CostCalculatorApp:
                 "grams_used": model.vars["Grams Used"].get(),
                 "printer_type": model.vars["Printer Type"].get(),
                 "printer_wattage": model.vars["Printer Wattage"].get(),
-                "print_hours": model.vars["Print Hours"].get(),
+                "print_days": model.vars["Print Days"].get() if "Print Days" in model.vars else "0",
+                "print_hours": model.vars["Print Hours"].get() if "Print Hours" in model.vars else "0",
+                "print_minutes": model.vars["Print Minutes"].get() if "Print Minutes" in model.vars else "0",
                 "electricity_rate": model.vars["Electricity Rate / kWh"].get(),
                 "machine_cost_per_hour": model.vars["Machine Cost / Hour"].get()
             }
-            
+            # Save any additional fields present in model.vars
+            for key, var in model.vars.items():
+                if key not in model_data and hasattr(var, 'get'):
+                    model_data[key] = var.get()
             project_data["models"].append(model_data)
         
         # Save to file
@@ -808,14 +943,18 @@ class CostCalculatorApp:
                     child.destroy()
             self.addons.clear()
             
-            # Load project name
-            self.project_name_var.set(project_data.get("project_name", DEFAULT_PROJECT_NAME))
+            # Set project name to the filename (without extension)
+            base_name = os.path.basename(file_path)
+            project_name = os.path.splitext(base_name)[0]
+            self.project_name_var.set(project_name)
+            print(f"Loaded project name (from filename): {project_name}")
             
             # Load overall settings
             overall = project_data.get("overall", {})
             self.labor_hours_var.set(overall.get("labor_hours", DEFAULT_LABOR_HOURS))
             self.labor_rate_var.set(overall.get("labor_rate", DEFAULT_LABOR_RATE))
             self.margin_percent_var.set(overall.get("margin_percent", overall.get("markup_percent", DEFAULT_MARGIN_PERCENT)))
+            self.discount_var.set(overall.get("discount", "0"))
             self.packaging_var.set(overall.get("packaging", DEFAULT_PACKAGING))
             self.shipping_var.set(overall.get("shipping", DEFAULT_SHIPPING))
             
@@ -835,18 +974,25 @@ class CostCalculatorApp:
                 model.on_remove = self.remove_model
                 model.pack(side="left", fill="y", padx=20, pady=5)
                 self.models.append(model)
-                
-                # Set model data
+
+                # Set model data for all known fields
                 model.model_name_var.set(model_data.get("name", f"Model {len(self.models)}"))
                 model.vars["Material"].set(model_data.get("material", DEFAULT_MATERIAL))
                 model.vars["Material Price"].set(model_data.get("material_price", DEFAULT_MATERIAL_PRICE))
                 model.vars["Grams Used"].set(model_data.get("grams_used", DEFAULT_GRAMS_USED))
                 model.vars["Printer Type"].set(model_data.get("printer_type", DEFAULT_PRINTER_TYPE))
                 model.vars["Printer Wattage"].set(model_data.get("printer_wattage", DEFAULT_PRINTER_WATTAGE))
+                model.vars["Print Days"].set(model_data.get("print_days", "0"))
                 model.vars["Print Hours"].set(model_data.get("print_hours", DEFAULT_PRINT_HOURS))
+                model.vars["Print Minutes"].set(model_data.get("print_minutes", "0"))
                 model.vars["Electricity Rate / kWh"].set(model_data.get("electricity_rate", DEFAULT_ELECTRICITY_RATE))
                 model.vars["Machine Cost / Hour"].set(model_data.get("machine_cost_per_hour", DEFAULT_MACHINE_COST_PER_HOUR))
-                
+
+                # Set any additional fields that exist in both model.vars and model_data
+                for key, var in model.vars.items():
+                    if key in model_data and hasattr(var, 'set'):
+                        var.set(model_data[key])
+
                 # Trigger auto-calculation
                 model.auto_calculate()
             
@@ -857,6 +1003,11 @@ class CostCalculatorApp:
             traceback.print_exc()
     
     def calculate_all(self):
+        # Validate all numeric fields before calculation
+        if not self.validate_all_numeric_fields():
+            import tkinter.messagebox as mb
+            mb.showerror("Invalid Input", "Some fields require a valid number. Please correct highlighted fields.")
+            return
         # Calculate totals from all models
         models_total = 0
         total_material = 0
@@ -871,7 +1022,12 @@ class CostCalculatorApp:
             total_machine += result["machine"]
 
         # Calculate overall add-ons cost
-        total_addons = sum(qty.get() * price.get() for name, qty, price in self.addons)
+        def safe_float(val):
+            try:
+                return float(val)
+            except Exception:
+                return 0.0
+        total_addons = sum(safe_float(qty.get()) * safe_float(price.get()) for name, qty, price in self.addons)
 
         # Apply labor (overall only)
         labor_hours = float(self.labor_hours_var.get() or 0)
