@@ -1,0 +1,16 @@
+INFORMATION AFTER INSTALLATION
+=============================
+
+Thank you for installing the 3D Printing Price Estimator by gridform3D!
+
+- You can launch the application from your Start Menu or desktop shortcut (if created).
+- The software will not attempt to connect to the internet at any time.
+- Updates, if available, must be downloaded manually from the official source.
+- For help, refer to the included USER_MANUAL.
+
+Privacy Notice:
+---------------
+- This software does NOT connect to the internet.
+- No data is sent, received, or tracked externally.
+
+Enjoy using the 3D Printing Price Estimator!

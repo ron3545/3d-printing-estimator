@@ -1,0 +1,12 @@
+INFORMATION BEFORE INSTALLATION
+==============================
+
+Thank you for choosing the 3D Printing Price Estimator by gridform3D!
+
+- This software is a standalone desktop application for estimating 3D printing costs.
+- No internet connection is required for installation or use.
+- All calculations and data are processed locally on your computer.
+- Your project files and data remain private and are not uploaded or shared.
+- This software does NOT connect to the internet at any time.
+
+If you have questions or need support, please contact gridform3D.

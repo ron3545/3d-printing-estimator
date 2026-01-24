@@ -1,0 +1,86 @@
+END USER LICENSE AGREEMENT (EULA)
+
+Software Name: 3D Printing Cost Calculator
+Publisher: gridform3D
+© 2026 gridform3D. All rights reserved.
+
+IMPORTANT: PLEASE READ THIS AGREEMENT CAREFULLY.
+
+By installing, copying, or using this software, you agree to be bound by the
+terms of this End User License Agreement. If you do not agree, do not install
+or use the software.
+
+
+1. LICENSE GRANT
+This software is licensed, not sold. The publisher grants you a non-exclusive,
+non-transferable license to use this software for personal or commercial
+3D printing cost estimation purposes.
+
+
+2. PERMITTED USE
+You may:
+- Use the software to estimate costs and pricing for 3D printing projects
+- Use the software for personal or business-related pricing decisions
+
+
+3. RESTRICTIONS
+You may NOT:
+- Copy, redistribute, resell, sublicense, or share this software
+- Modify, reverse engineer, decompile, or disassemble the software
+- Use the software as part of another product or service without permission
+
+
+4. INTELLECTUAL PROPERTY
+All rights, title, and interest in and to the software remain the property
+of gridform3D. This agreement does not grant ownership of the software.
+
+
+5. ACCURACY & ESTIMATION DISCLAIMER
+This software provides cost estimates based on user-provided inputs and
+industry-standard 3D printing pricing formulas.
+
+Actual costs, profits, and results may vary due to factors such as material
+quality, machine condition, electricity rates, labor efficiency, and
+operating environment.
+
+The publisher does not guarantee accuracy, profitability, or financial
+outcomes. Users are responsible for validating all results before use.
+
+
+6. DISCLAIMER OF WARRANTY
+The software is provided "AS IS", without warranty of any kind, express or
+implied, including but not limited to warranties of merchantability or
+fitness for a particular purpose.
+
+
+7. LIMITATION OF LIABILITY
+In no event shall gridform3D be liable for any damages, losses, or claims
+arising from the use or inability to use this software, including but not
+limited to loss of profit, business interruption, or data loss.
+
+
+8. TERMINATION
+This license is effective until terminated. It will terminate automatically
+if you violate any term of this agreement.
+
+
+9. GOVERNING LAW
+This agreement shall be governed by the applicable laws of the publisher’s
+jurisdiction.
+
+10. OFFLINE USE & DATA PRIVACY
+
+This software operates entirely offline.
+
+The software does NOT:
+- Connect to the internet
+- Send or receive data
+- Track usage or behavior
+- Collect personal or project information
+- Perform background network communication
+
+All calculations, project files, and data remain locally on the user's
+computer. The publisher does not access, store, or transmit any user data.
+
+By clicking "I Agree", you acknowledge that you have read, understood, and
+accepted this agreement.
