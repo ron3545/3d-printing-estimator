@@ -160,7 +160,7 @@ class ModelFrame(ttk.LabelFrame):
         # Printer Type dropdown
         ttk.Label(self, text="Printer Type").grid(row=row, column=0, sticky="w", padx=5, pady=2)
         self.printer_type_var = tk.StringVar(value=DEFAULT_PRINTER_TYPE)
-        printer_combo = ttk.Combobox(self, textvariable=self.printer_type_var, state="readonly")
+        printer_combo = ttk.Combobox(self, textvariable=self.printer_type_var, state="readonly", height=10)
         
         # Load printer options
         printer_configs = load_printer_configs()
@@ -173,8 +173,6 @@ class ModelFrame(ttk.LabelFrame):
             selected = self.printer_type_var.get()
             if selected and selected in printer_configs:
                 self.vars["Printer Wattage"].set(str(printer_configs[selected]['wattage']))
-                if "Printer Lifetime (hours)" in self.vars:
-                    self.vars["Printer Lifetime (hours)"].set(str(printer_configs[selected]['lifetime_hours']))
         
         printer_combo.bind('<<ComboboxSelected>>', on_printer_selected)
         self.vars["Printer Type"] = self.printer_type_var
@@ -182,7 +180,6 @@ class ModelFrame(ttk.LabelFrame):
         
         printer_fields = [
             ("Printer Wattage", DEFAULT_PRINTER_WATTAGE),
-            ("Printer Lifetime (hours)", "5000"),
             ("Electricity Rate / kWh", DEFAULT_ELECTRICITY_RATE),
             ("Machine Cost / Hour", DEFAULT_MACHINE_COST_PER_HOUR),
         ]
@@ -225,10 +222,16 @@ class ModelFrame(ttk.LabelFrame):
             ttk.Label(self, text=label).grid(row=row, column=0, sticky="w", padx=5, pady=2)
             var = tk.StringVar(value=default)
             var.trace_add("write", lambda *args: self.auto_calculate())
-            entry = tk.Entry(self, textvariable=var)
-            self.add_numeric_validation(entry, var, allow_float=True)
+            
+            # Make Printer Wattage read-only (only editable via Configure Printers)
+            if label == "Printer Wattage":
+                entry = tk.Entry(self, textvariable=var, state='readonly')
+            else:
+                entry = tk.Entry(self, textvariable=var)
+                self.add_numeric_validation(entry, var, allow_float=True)
+                self.bind_select_all_on_focus(entry)
+            
             entry.grid(row=row, column=1, sticky="ew", padx=5)
-            self.bind_select_all_on_focus(entry)
             self.vars[label] = var
             if label == "Machine Cost / Hour":
                 self.entries[label] = entry

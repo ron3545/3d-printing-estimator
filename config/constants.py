@@ -12,11 +12,11 @@ PRINTER_CONFIG_FILE = "printer_config.ini"
 
 # Default printer configurations
 DEFAULT_PRINTERS = {
-    "Ender 3": {"wattage": 350, "lifetime_hours": 5000},
-    "Prusa i3 MK3S+": {"wattage": 120, "lifetime_hours": 10000},
-    "Anycubic Kobra": {"wattage": 250, "lifetime_hours": 5000},
-    "Creality CR-10": {"wattage": 300, "lifetime_hours": 5000},
-    "Bambu Lab X1 Carbon": {"wattage": 350, "lifetime_hours": 8000}
+    "Ender 3": {"wattage": 350},
+    "Prusa i3 MK3S+": {"wattage": 120},
+    "Anycubic Kobra": {"wattage": 250},
+    "Creality CR-10": {"wattage": 300},
+    "Bambu Lab X1 Carbon": {"wattage": 350}
 }
 
 # =========================

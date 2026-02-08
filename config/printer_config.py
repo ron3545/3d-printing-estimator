@@ -14,8 +14,7 @@ def load_printer_configs():
             printers = {}
             for section in config.sections():
                 printers[section] = {
-                    "wattage": config.getint(section, "wattage"),
-                    "lifetime_hours": config.getint(section, "lifetime_hours")
+                    "wattage": int(float(config.get(section, "wattage")))
                 }
             return printers
         except Exception as e:
@@ -30,8 +29,7 @@ def save_printer_configs(configs):
         config = configparser.ConfigParser()
         for printer_name, details in configs.items():
             config[printer_name] = {
-                "wattage": str(details["wattage"]),
-                "lifetime_hours": str(details["lifetime_hours"])
+                "wattage": str(details["wattage"])
             }
         with open(PRINTER_CONFIG_FILE, 'w') as f:
             config.write(f)

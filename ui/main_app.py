@@ -577,7 +577,6 @@ class CostCalculatorApp:
                 "grams_used": model.vars["Grams Used"].get(),
                 "printer_type": model.vars["Printer Type"].get(),
                 "printer_wattage": model.vars["Printer Wattage"].get(),
-                "printer_lifetime": model.vars.get("Printer Lifetime (hours)", tk.StringVar(value="5000")).get(),
                 "print_days": model.vars["Print Days"].get() if "Print Days" in model.vars else "0",
                 "print_hours": model.vars["Print Hours"].get() if "Print Hours" in model.vars else "0",
                 "print_minutes": model.vars["Print Minutes"].get() if "Print Minutes" in model.vars else "0",
@@ -663,7 +662,6 @@ class CostCalculatorApp:
                 model.vars["Grams Used"].set(model_data.get("grams_used", DEFAULT_GRAMS_USED))
                 model.vars["Printer Type"].set(model_data.get("printer_type", DEFAULT_PRINTER_TYPE))
                 model.vars["Printer Wattage"].set(model_data.get("printer_wattage", DEFAULT_PRINTER_WATTAGE))
-                model.vars["Printer Lifetime (hours)"].set(model_data.get("printer_lifetime", "5000"))
                 model.vars["Print Days"].set(model_data.get("print_days", "0"))
                 model.vars["Print Hours"].set(model_data.get("print_hours", DEFAULT_PRINT_HOURS))
                 model.vars["Print Minutes"].set(model_data.get("print_minutes", "0"))
@@ -747,9 +745,9 @@ class CostCalculatorApp:
         # Model fields
         for model in self.models:
             for label, var in model.vars.items():
-                # Only check fields that are numbers (skip model name, printer type, etc)
+                # Only check fields that are numbers (skip model name, printer type, printer wattage, etc)
                 if label in ["Material Price", "Grams Used", "Quantity", "Print Days", "Print Hours", 
-                            "Print Minutes", "Printer Wattage", "Printer Lifetime (hours)", 
+                            "Print Minutes", 
                             "Electricity Rate / kWh", "Machine Cost / Hour"]:
                     # Find the entry widget
                     entry = None
